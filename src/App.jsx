@@ -3,8 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 import { LayoutDashboard, Wallet, PiggyBank, ChartNoAxesCombined, Settings2, Plus, ArrowRight, ArrowUpRight, Check, X, Pencil, LogOut, CalendarDays, ShieldCheck, Sparkles, Landmark, Heart, ChevronRight, Target, Info, Trash2, CircleCheck, Clock3, LockKeyhole, Mail, Eye, EyeOff, TrendingUp, Menu } from 'lucide-react';
 import { initialState, normalizeState, allocationsForPaycheck, savingsProjection, totalBalances, savingsAccount, dollar, roundedDollar, today, formatDate, shortMonth, withPaycheckApplied } from './finance.js';
 
-const configured = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
-const db = configured ? createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) : null;
+// This project URL and publishable key are designed for use in public browser clients.
+// Access to private finance records is enforced by Supabase Auth and table-level RLS.
+// Vercel environment variables override the built-in public defaults when supplied.
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ujvuqbgheewbyvfusqvz.supabase.co';
+const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_8KHlNu2WyrvkgYF_Vm-jYQ_EsOFrzaO';
+const configured = Boolean(supabaseUrl && supabasePublishableKey);
+const db = configured ? createClient(supabaseUrl, supabasePublishableKey) : null;
 const nav = [
   {id:'overview', name:'Overview', icon:LayoutDashboard},
   {id:'paydays', name:'Paydays', icon:Wallet},
