@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { LayoutDashboard, Wallet, PiggyBank, ChartNoAxesCombined, Settings2, Plus, ArrowRight, ArrowUpRight, Check, X, Pencil, LogOut, CalendarDays, ShieldCheck, Sparkles, Landmark, Heart, ChevronRight, Target, Info, Trash2, CircleCheck, Clock3, LockKeyhole, Mail, Eye, EyeOff, TrendingUp, Menu } from 'lucide-react';
-import { initialState, normalizeState, allocationsForPaycheck, savingsProjection, totalBalances, savingsAccount, dollar, roundedDollar, today, formatDate, shortMonth, withPaycheckApplied } from './finance.js';
+import { initialState, normalizeState, allocationsForPaycheck, savingsProjection, totalBalances, savingsAccount, dollar, roundedDollar, today, formatDate, shortMonth, withPaycheckApplied, recordWealthfrontActivity, removeWealthfrontActivity, getMostRecentFullMonthPace } from './finance.js';
 
 // This project URL and publishable key are designed for use in public browser clients.
 // Access to private finance records is enforced by Supabase Auth and table-level RLS.
@@ -53,17 +53,78 @@ function ProjectionChart({points}) {
  const selected=[0,Math.floor((points.length-1)/2),points.length-1];
  return <div className="chart-container"><svg viewBox={'0 0 '+width+' '+height} role="img" aria-label="Projected account balance growth over time" preserveAspectRatio="none"><defs><linearGradient id="savingsFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7f62ad" stopOpacity=".28"/><stop offset="1" stopColor="#7f62ad" stopOpacity=".015"/></linearGradient></defs>{[.25,.5,.75].map(v=><line key={v} x1={l} x2={width-r} y1={y(max*v)} y2={y(max*v)} stroke="#eae8ef" strokeDasharray="5 6" />)}<path d={area} fill="url(#savingsFill)"/><path d={path} stroke="#7960a8" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>{selected.map(i=><circle key={i} cx={x(i)} cy={y(points[i].balance)} r="5" stroke="#fff" strokeWidth="3" fill="#7960a8"/>)}</svg><div className="chart-labels"><span>Today</span><span>{Math.floor((points.length-1)/2)} months</span><span>{points.length-1} months</span></div></div>;
 }
-function GrowthContent({accounts,monthlySavings,setMonthlySavings,showGoal=true,small=false}) {
- const savings = savingsAccount(accounts);
+function GrowthContent({accounts,activity=[],onDeposit,small=false}) {
+ const savings=savingsAccount(accounts);
  const [months,setMonths]=useState(12);
- const [draft,setDraft]=useState(String(monthlySavings));
- const [editing,setEditing]=useState(false);
- useEffect(()=>{if(!editing)setDraft(String(monthlySavings));},[monthlySavings,editing]);
+ const [mode,setMode]=useState('steady');
  const balance=Number(savings?.balance)||0,apy=Number(savings?.apy)||0;
- const points=useMemo(()=>savingsProjection({startingBalance:balance,monthlyContribution:monthlySavings,apyPercent:apy,months}),[balance,monthlySavings,apy,months]);
- const end=points[points.length-1];const interest=end.interest;const futureMonth=shortMonth(months);
- function commitContribution(){const n=Number(draft);if(!Number.isFinite(n)||n<0){setDraft(String(monthlySavings));setEditing(false);return;}setMonthlySavings(Math.round(n*100)/100);setEditing(false);}
- return <section className={'panel growth-panel '+(small?'growth-small':'')}><div className="panel-heading"><div><div className="tiny-label"><TrendingUp size={14}/> THE FUTURE LOOKS GOOD</div><h3>Watch your savings bloom.</h3><p>Small, consistent deposits can make a big difference.</p></div><div className="period-switch">{[12,24,36].map(n=><button key={n} onClick={()=>setMonths(n)} className={months===n?'selected':''}>{n===12?'1 yr':n===24?'2 yr':'3 yr'}</button>)}</div></div><div className="growth-summary"><div><span>Could grow to by {futureMonth}</span><strong>{dollar(end.balance)}</strong><small>Including {dollar(interest)} estimated interest</small></div><span className="growth-pill"><Sparkles size={14}/> {apy}% APY</span></div><ProjectionChart points={points}/><div className="growth-bottom"><div><span className="subtle">Monthly savings deposit</span>{editing?<div className="inline-edit"><span>$</span><input type="number" min="0" step="0.01" autoFocus value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')commitContribution();if(e.key==='Escape')setEditing(false);}}/><button className="icon-button" aria-label="Save contribution" onClick={commitContribution}><Check size={18}/></button></div>:<button className="growth-input" onClick={()=>setEditing(true)}>{dollar(monthlySavings)} <Pencil size={14}/></button>}</div><div className="growth-detail"><span className="subtle">Monthly contributions</span><strong>{dollar(monthlySavings*months)}</strong></div></div><p className="projection-disclaimer"><Info size={14}/> Projection assumes end-of-month deposits and a constant {apy}% APY. It excludes taxes, fees, and withdrawals. Actual bank rates and interest posting may change. This is a forecast, not a bank balance.</p></section>;
+ const pace=getMostRecentFullMonthPace(activity);
+ const hasPace=pace.hasData && pace.monthlyNet>0;
+ const activeMode=hasPace && mode==='pace'?'pace':'steady';
+ const monthlyContribution=activeMode==='pace'?pace.monthlyNet:0;
+ const points=useMemo(()=>savingsProjection({startingBalance:balance,monthlyContribution,apyPercent:apy,months}),[balance,monthlyContribution,apy,months]);
+ const end=points[points.length-1];
+ const futureMonth=shortMonth(months);
+ const observedMonth=new Date(pace.monthKey+'-01T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+ return <section className={'panel growth-panel '+(small?'growth-small':'')}>
+  <div className="panel-heading">
+   <div><div className="tiny-label"><TrendingUp size={14}/> WEALTHFRONT PACE TRACKER</div><h3>Watch your savings bloom.</h3><p>Built around money actually saved, not imaginary deposits.</p></div>
+   <div className="period-switch">{[12,24,36].map(n=><button key={n} onClick={()=>setMonths(n)} className={months===n?'selected':''}>{n===12?'1 yr':n===24?'2 yr':'3 yr'}</button>)}</div>
+  </div>
+  <div className="wealthfront-live-balance">
+   <div><span className="subtle">Your tracked Wealthfront balance today</span><strong>{dollar(balance)}</strong></div>
+   <button className="wf-add-button" type="button" onClick={onDeposit}><Plus size={16}/> Log deposit</button>
+  </div>
+  <div className="growth-mode-tabs" role="group" aria-label="Choose savings forecast">
+   <button type="button" className={activeMode==='steady'?'active':''} onClick={()=>setMode('steady')}>No new deposits</button>
+   <button type="button" className={activeMode==='pace'?'active':''} disabled={!hasPace} onClick={()=>setMode('pace')}>Last full month's pace</button>
+  </div>
+  <div className="growth-summary">
+   <div><span>{activeMode==='steady'?'If you add nothing else, by '+futureMonth:'At your '+observedMonth+' pace, by '+futureMonth}</span>
+    <strong>{dollar(end.balance)}</strong>
+    <small>{dollar(end.interest)} projected interest{monthlyContribution>0?' + '+dollar(monthlyContribution*months)+' future deposits':''}</small>
+   </div><span className="growth-pill"><Sparkles size={14}/> {apy}% APY</span>
+  </div>
+  <ProjectionChart points={points}/>
+  <div className="growth-bottom">
+   <div><span className="subtle">Monthly savings pace</span><strong className="wf-pace-amount">{hasPace?dollar(pace.monthlyNet):'Not established yet'}</strong></div>
+   <div className="growth-detail"><span className="subtle">{hasPace?'Based on '+observedMonth:'How the pace is calculated'}</span><strong>{hasPace?'Net recorded deposits':'Last completed month'}</strong></div>
+  </div>
+  {!hasPace&&<p className="wf-insight"><Sparkles size={16}/> Log your real Wealthfront deposits. After a full calendar month, your savings pace will appear automatically. Today's interest-only forecast will update with each deposit.</p>}
+  {hasPace&&<p className="wf-insight"><Sparkles size={16}/> In {observedMonth}, you added {dollar(pace.deposited)} and withdrew {dollar(pace.withdrawn)}. Your pace forecast assumes the same net addition every month going forward.</p>}
+  <p className="projection-disclaimer"><Info size={14}/> Forecast uses the current manually tracked Wealthfront balance, a constant {apy}% APY, and monthly equivalent compounding. Pace deposits, when selected, are assumed at each month-end. It is an estimate, not a live bank balance or guaranteed return; rates, posting schedules, taxes and withdrawals can change results.</p>
+ </section>;
+}
+function WealthfrontActivityModal({accounts,activity,onSave,onClose,saving}) {
+ const savings=savingsAccount(accounts);
+ const firstDeposit=!(activity||[]).length && Number(savings?.balance||0)===0;
+ const [amount,setAmount]=useState('');
+ const [date,setDate]=useState(today());
+ const [type,setType]=useState('deposit');
+ const [note,setNote]=useState('');
+ const [initial,setInitial]=useState(firstDeposit);
+ function submit(e){
+  e.preventDefault();const n=Number(amount);
+  if(!Number.isFinite(n)||n<=0||Math.round(n*100)<=0)return;
+  onSave({id:uid(),type:type==='withdrawal'?'withdrawal':initial?'opening':'deposit',amount:Math.round(n*100)/100,date,note:note.trim(),created_at:new Date().toISOString()});
+ }
+ return <Modal title="Update Wealthfront" subtitle="Log a real deposit or withdrawal to keep your balance accurate." onClose={onClose}>
+  <form className="modal-body" onSubmit={submit}>
+   <div className="wf-modal-current"><span>Current tracked balance</span><strong>{dollar(savings?.balance||0)}</strong></div>
+   <div className="growth-mode-tabs"><button type="button" className={type==='deposit'?'active':''} onClick={()=>setType('deposit')}>Money added</button><button type="button" className={type==='withdrawal'?'active':''} onClick={()=>{setType('withdrawal');setInitial(false);}}>Money withdrawn</button></div>
+   <label className="form-label">{type==='deposit'?'Amount added to Wealthfront':'Amount taken out'}</label>
+   <div className="large-money-input"><span>$</span><input type="number" inputMode="decimal" min="0.01" step="0.01" required autoFocus placeholder="0.00" value={amount} onChange={e=>setAmount(e.target.value)}/></div>
+   <div className="two-fields"><label><span className="form-label">Date money moved</span><input type="date" className="field" required max={today()} value={date} onChange={e=>setDate(e.target.value)}/></label><label><span className="form-label">Note (optional)</span><input className="field" maxLength={120} placeholder="Payday transfer" value={note} onChange={e=>setNote(e.target.value)}/></label></div>
+   {type==='deposit'&&firstDeposit&&<label className="wf-opening-check"><input type="checkbox" checked={initial} onChange={e=>setInitial(e.target.checked)}/><span><strong>This is my starting deposit</strong><small>Use it to establish my balance, not my recurring monthly savings pace.</small></span></label>}
+   <p className="hint-text"><Info size={15}/> This only records money that has actually moved. It doesn't make a transfer through Wealthfront.</p>
+   <button className="btn btn-dark full" type="submit" disabled={saving||!(Number(amount)>0)}>{saving?'Saving...':type==='deposit'?'Log deposit':'Log withdrawal'}<Check size={17}/></button>
+  </form>
+ </Modal>;
+}
+function WealthfrontHistory({activity,onDelete,saving,onAdd}) {
+ return <section className="panel wf-history"><div className="panel-heading"><div><div className="tiny-label">REAL DEPOSITS & WITHDRAWALS</div><h3>Wealthfront activity</h3><p>Only movements you recorded. No bank connection.</p></div><button className="wf-history-add" onClick={onAdd} type="button"><Plus size={16}/> Add</button></div>
+  {activity.length===0?<div className="wf-history-empty"><PiggyBank size={25}/><strong>No deposits recorded yet</strong><p>Make your first deposit and start watching your balance grow.</p><button className="outline-btn" onClick={onAdd}>Log first deposit <ArrowRight size={15}/></button></div>:<div className="wf-movements">{activity.map(x=><div key={x.id} className="wf-movement"><div className={'mini-icon '+(x.type==='withdrawal'?'peach':'mint')}>{x.type==='withdrawal'?<ArrowUpRight size={17}/>:<ArrowRight size={17}/>}</div><div className="wf-movement-desc"><strong>{x.type==='opening'?'Starting deposit':x.type==='withdrawal'?'Withdrawal':'Deposit'}</strong><small>{formatDate(x.date)}{x.note?' · '+x.note:''}</small></div><b className={x.type==='withdrawal'?'withdrawal':'deposit'}>{x.type==='withdrawal'?'-':'+'}{dollar(x.amount)}</b><button className="delete-action" type="button" title="Remove movement" disabled={saving} onClick={()=>onDelete(x.id)}><Trash2 size={15}/></button></div>)}</div>}
+ </section>;
 }
 function Modal({title,subtitle,children,onClose}) {return <div className="modal-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)onClose();}}><section className="modal-card" role="dialog" aria-modal="true" aria-label={title}><div className="modal-top"><div><h2>{title}</h2>{subtitle&&<p>{subtitle}</p>}</div><button className="icon-button" onClick={onClose} aria-label="Close dialog"><X size={21}/></button></div>{children}</section></div>;}
 function PaycheckModal({accounts,onSave,onClose,saving}) {
