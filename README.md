@@ -24,6 +24,14 @@ A simple, mobile-first personal finance tracker. Built with React, Vite, Supabas
 `npm test`
 `npm run dev`
 
+## Wealthfront balance and pace tracking
+- Open **Money growth** and select **Log deposit**. The first deposit can be marked as a starting deposit, so a one-time large deposit does not become the monthly savings pace.
+- Recorded deposits and withdrawals update the manually tracked Wealthfront balance immediately.
+- The default projection assumes **no future deposits**: it grows today's recorded balance using the editable APY, for 1, 2 or 3 years. A $2,000 deposit at a constant 3.55% APY becomes $2,071 after 12 months; $2,200 becomes $2,278.10.
+- Once the most recent **fully completed calendar month** contains recorded, non-opening Wealthfront activity, a second projection becomes available using its net contributions (deposits minus withdrawals, floored at zero). No partially completed current month or arbitrary default $1,000 deposit is assumed.
+- The app never assumes that a paycheck split is a real Wealthfront transfer. Completed new paycheck plans update other tracked accounts but not Wealthfront. Sofia logs the actual Wealthfront deposit separately.
+- The app doesn't sync bank data. Reconcile tracked balances with the actual Wealthfront statement from time to time, including credited interest.
+
 ## Financial model
 The savings model uses `monthlyRate = (1 + APY/100) ** (1/12) - 1`, compounds the currently tracked balance monthly, and credits each chosen monthly contribution at the end of the month. This is an estimate, not a guaranteed account return. Actual bank posting schedules, rate changes, taxes, fees, and withdrawals can change the result.
 
