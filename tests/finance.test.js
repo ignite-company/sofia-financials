@@ -63,7 +63,7 @@ test('record $2000 starting deposit, then $200 extra; interest-only projections 
  assert.equal(s.accounts.find(a=>a.id==='savings').balance,2000);
  const p1=savingsProjection({startingBalance:2000,monthlyContribution:0,apyPercent:3.55,months:12})[12];
  assert.equal(p1.balance.toFixed(2),'2071.00');
- s=recordWealthfrontActivity(s,{id:'two',type:'deposit',amount:200,date:'2026-11-17'});
+ s=recordWealthfrontActivity(s,{id:'two',type:'deposit',amount:200,date:'2026-11-10'});
  assert.equal(s.accounts.find(a=>a.id==='savings').balance,2200);
  const p2=savingsProjection({startingBalance:2200,monthlyContribution:0,apyPercent:3.55,months:12})[12];
  assert.equal(p2.balance.toFixed(2),'2278.10');
@@ -93,10 +93,10 @@ test('full month pace subtracts withdrawals and does not rely on old months',()=
 test('delete an actual deposit reverses balance; prevents impossible withdrawals',()=>{
  let s=initialState();
  s=recordWealthfrontActivity(s,{id:'start',type:'opening',date:'2026-11-10',amount:2000});
- s=recordWealthfrontActivity(s,{id:'weekly',type:'deposit',date:'2026-11-17',amount:200});
+ s=recordWealthfrontActivity(s,{id:'weekly',type:'deposit',date:'2026-11-10',amount:200});
  s=removeWealthfrontActivity(s,'weekly');
  assert.equal(s.accounts.find(a=>a.id==='savings').balance,2000);
- assert.throws(()=>recordWealthfrontActivity(s,{id:'bad',type:'withdrawal',date:'2026-11-17',amount:2001}),/exceeds/);
+ assert.throws(()=>recordWealthfrontActivity(s,{id:'bad',type:'withdrawal',date:'2026-11-10',amount:2001}),/exceeds/);
  assert.throws(()=>recordWealthfrontActivity(s,{id:'future',type:'deposit',date:'2099-01-01',amount:100}),/after it happens/);
 });
 test('existing user data without activity migrates safely',()=>{
