@@ -6,3 +6,60 @@
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 
 .archive-account{display:block;color:#a35c62;font-weight:700;font-size:11px;text-align:center;margin:16px auto 0;padding:9px 12px;border-radius:8px}.archive-account:hover{background:#fff3f3}
+
+/* Wealthfront tracking: actual deposits and interest-only forecasts first */
+.wealthfront-live-balance{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#f6f1fa;border:1px solid #efe7f5;border-radius:15px;padding:17px 19px;margin-top:22px}
+.wealthfront-live-balance>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.wealthfront-live-balance strong{font:800 clamp(20px,2.4vw,28px)/1.25 Manrope,sans-serif;letter-spacing:-.05em;color:#4d385c;overflow-wrap:anywhere}
+.wf-add-button,.wf-history-add{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;border-radius:10px;background:#5c4375;color:#fff;font-size:11px;font-weight:800;padding:11px 13px}
+.wf-add-button:hover,.wf-history-add:hover{background:#73518e}
+.growth-mode-tabs{display:flex;align-items:center;gap:5px;background:#f6f3f8;border-radius:11px;padding:5px;margin-top:17px;width:max-content;max-width:100%}
+.growth-mode-tabs button{font-size:11px;font-weight:800;padding:9px 12px;border-radius:8px;color:#897c92;transition:background .15s;white-space:normal;text-align:center}
+.growth-mode-tabs button.active{background:#fff;color:#6b4c8f;box-shadow:0 2px 8px rgba(39,30,48,.07)}
+.growth-mode-tabs button:disabled{opacity:.45;cursor:default}
+.wf-pace-amount{font-size:14px;font-weight:800;color:#604875;margin-top:4px}
+.wf-insight{background:#f4eff9;border-radius:12px;padding:13px 14px;display:flex;align-items:flex-start;gap:10px;font-size:11px;line-height:1.65;color:#735e89;margin:15px 0 0}
+.wf-insight svg{flex-shrink:0;margin-top:1px;color:#9572b7}
+.wf-modal-current{display:flex;justify-content:space-between;gap:10px;align-items:center;background:#f7f2fa;border:1px solid #eee7f1;padding:15px;border-radius:12px;font-size:11px;color:#88768f;margin-bottom:16px}
+.wf-modal-current strong{font-family:Manrope,sans-serif;font-size:19px;letter-spacing:-.04em;color:#473750}
+.wf-opening-check{margin-top:16px;background:#f1f8f3;border-radius:12px;padding:14px;display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.wf-opening-check input{accent-color:#6b997e;margin-top:3px;flex-shrink:0}
+.wf-opening-check span{display:flex;flex-direction:column;gap:5px}
+.wf-opening-check strong{font-size:11px;color:#4a7860}
+.wf-opening-check small{font-size:10px;line-height:1.5;color:#709382}
+.growth-primary{min-width:0;display:flex;flex-direction:column;gap:18px}
+.wf-history .panel-heading h3{margin-top:8px}
+.wf-history-add{padding:9px 12px}
+.wf-history-empty{padding:24px 10px 15px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;color:#9878ae}
+.wf-history-empty strong{color:#594666;font-size:12px}
+.wf-history-empty p{color:#a399ac;font-size:11px;margin:0 0 7px;line-height:1.5}
+.wf-history-empty .outline-btn{margin:0}
+.wf-movements{margin-top:12px}
+.wf-movement{display:flex;gap:12px;align-items:center;padding:13px 0;border-top:1px solid #f0ecf1}
+.wf-movement-desc{flex:1;display:flex;min-width:0;flex-direction:column;gap:4px}
+.wf-movement-desc strong{font-size:12px}
+.wf-movement-desc small{font-size:10px;color:#a49aa9;overflow-wrap:anywhere}
+.wf-movement>b{font-size:13px;white-space:nowrap}
+.wf-movement>b.deposit{color:#488b65}
+.wf-movement>b.withdrawal{color:#a76d52}
+.wf-payday-link{display:inline-flex;align-items:center;gap:7px;color:#765b99;font-weight:800;font-size:11px;margin-left:auto;margin-right:8px}
+.payday-actions{flex-wrap:wrap}
+.account-actions{display:flex;align-items:center;gap:10px}
+.account-actions .outline-btn{margin:0;white-space:nowrap;min-height:44px}
+@media(max-width:720px){
+ .growth-mode-tabs{width:100%}
+ .growth-mode-tabs button{flex:1;padding:10px 6px;font-size:10px}
+ .growth-panel .panel-heading{gap:8px}
+ .growth-panel .panel-heading .period-switch{flex-shrink:0}
+ .wealthfront-live-balance{padding:14px 12px}
+ .wealthfront-live-balance strong{font-size:22px}
+ .wf-add-button{padding:10px;font-size:10px}
+ .account-actions{flex-direction:column;align-items:stretch;width:100%}
+ .account-actions .btn,.account-actions .outline-btn{width:100%}
+ .page-intro:has(.account-actions){align-items:stretch}
+ .payday-actions{gap:10px}
+ .wf-payday-link{margin-left:0;margin-right:0}
+ .wf-movement{gap:8px}
+ .wf-movement>b{font-size:12px}
+}
+@media(max-width:380px){.growth-panel .panel-heading{flex-direction:column}.wf-add-button{font-size:0;min-width:38px}.wf-add-button svg{width:19px;height:19px}.wf-pace-amount{font-size:12px}.wf-movement .mini-icon{width:29px;height:29px}}
