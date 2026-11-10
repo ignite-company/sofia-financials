@@ -1,0 +1,19 @@
+{
+  "name": "Sofia's Money",
+  "short_name": "Sofia's Money",
+  "description": "A simple payday planner and Wealthfront savings tracker",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8f7f5",
+  "theme_color": "#56416c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
