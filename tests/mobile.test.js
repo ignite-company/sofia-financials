@@ -38,3 +38,18 @@ test('Sofia can launch from an added phone home-screen shortcut',()=>{
 test('Changing tabs scrolls the mobile page to the top',()=>{
  assert.match(app,/window\.scrollTo\(\{top:0,behavior:'auto'\}\)/);
 });
+
+test('Auth links remain aligned without wrapping on narrow phones',()=>{
+ assert.match(app,/className="auth-switch-row"/);
+ assert.match(app,/className="auth-forgot"/);
+ assert.match(css,/\.auth-switch-row\{display:flex;flex-wrap:nowrap/);
+ assert.match(css,/\.auth-switch-row>span\{flex-shrink:0\}/);
+ assert.match(css,/\.auth-switch button\{[^}]*min-height:42px/);
+});
+test('Sign-in, sign-up and reset screens share consistent vertical spacing',()=>{
+ assert.match(css,/\.auth-box \.auth-emblem\{margin-bottom:24px\}/);
+ assert.match(css,/\.auth-box \.muted\{margin-bottom:20px/);
+ assert.match(css,/\.auth-box \.form-label\{margin-top:19px;margin-bottom:9px\}/);
+ assert.match(css,/\.auth-box \.btn\{margin-top:22px\}/);
+ assert.match(css,/\.auth-box \.private-note\{margin-top:24px/);
+});
